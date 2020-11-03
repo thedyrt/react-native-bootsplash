@@ -4,6 +4,7 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.app.Activity;
 import android.content.Context;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateInterpolator;
@@ -19,7 +20,14 @@ public class RNBootSplash {
 
   private static boolean mInitialized = false;
   private static int mDrawableResId = -1;
+  private static int mLayoutResId = -1;
   private static boolean mIsVisible = false;
+
+  public static void initLayout(int layoutResId, Activity activity) {
+    mLayoutResId = layoutResId;
+    mInitialized = true;
+    RNBootSplash.show(activity, 0.0f);
+  }
 
   public static void init(final int drawableResId, @NonNull final Activity activity) {
     if (!mInitialized) {
@@ -40,16 +48,22 @@ public class RNBootSplash {
         mIsVisible = true;
 
         Context context = activity.getApplicationContext();
-        LinearLayout layout = new LinearLayout(context);
-        LayoutParams params = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
-        View view = new View(context);
         int roundedDuration = duration.intValue();
 
-        view.setBackgroundResource(mDrawableResId);
+        LayoutParams params = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
+        ViewGroup layout = null;
+        if (mDrawableResId != -1) {
+          layout = new LinearLayout(context);
+          View view = new View(context);
+          view.setBackgroundResource(mDrawableResId);
+          layout.setLayoutTransition(null);
+          ((LinearLayout)layout).setOrientation(LinearLayout.VERTICAL);
+          layout.addView(view, params);
+        } else {
+          layout = (ViewGroup) LayoutInflater.from(activity).inflate(mLayoutResId, null, false);
+        }
+
         layout.setId(R.id.bootsplash_layout_id);
-        layout.setLayoutTransition(null);
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.addView(view, params);
 
         if (roundedDuration <= 0) {
           activity.addContentView(layout, params);
@@ -78,7 +92,7 @@ public class RNBootSplash {
 
         mIsVisible = false;
 
-        final LinearLayout layout = activity.findViewById(R.id.bootsplash_layout_id);
+        final ViewGroup layout = activity.findViewById(R.id.bootsplash_layout_id);
 
         if (layout == null) {
           return;
